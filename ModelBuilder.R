@@ -11,28 +11,50 @@ options(warn=0)
 
 set.seed(4150)
 
-filepre<-function(filename, chunks){
-    fullfile<-readLines(filename)
+filepre<-function(dir, filename, chunks){
+    fullfile<-readLines(paste(dir, "/", filename, sep=""))
     len<-length(fullfile)
 #    sampfile<-sample(1:len,len*rate)
+
+
     newbase<-str_sub(filename,1,str_length(filename)-4)
     start<-1
     for(i in 1:chunks){
-        print(start)
-        output<-paste(newbase, i, ".txt", sep="")
+        output<-paste(dir, "/split/split",i, "/", newbase, i, ".txt", sep="")
         end<-round(i*len/chunks)   
-        print(end)
+        print(output)
         write(fullfile[start:end], output)
-        start<-end
     }
- #   write(fullfile[sampfile], output)
+ 
 }
 
 
-corp<-VCorpus(DirSource("C:/Users/elarsen/Coursera work/Capstone/data/samp2"), readerControl=list(readPlain))
 
-Tokenizer <- function(x) NGramTokenizer(x, Weka_control(min = 1, max = 1))
-unigram<-TermDocumentMatrix(corp, control = list(tokenize = Tokenizer))
+# need to make and if this dir exists and move this code into the pre function.
+dir.create("data/split")
+
+
+chunks<-10
+for(i in 1:chunks){
+    newdir<-paste("data/split/split", i, sep="")
+    dir.create(newdir)
+}
+
+filepre("data", "en_US.news.txt", chunks)
+filepre("data", "en_US.blogs.txt", chunks)
+filepre("data", "en_US.twitter.txt", chunks)
+
+
+corp<-VCorpus(DirSource("data/split/split1"), readerControl=list(readPlain))
+
+corp<-tm_map(corp, removeWords, stopwords("english"))
+corp<-tm_map(corp, content_transformer(tolower))
+corp<-tm_map(corp, removePunctuation)
+corp<-tm_map(corp, removeNumbers)
+corp<-tm_map(corp, PlainTextDocument)
+
+#Tokenizer <- function(x) NGramTokenizer(x, Weka_control(min = 1, max = 1))
+#unigram<-TermDocumentMatrix(corp, control = list(tokenize = Tokenizer))
 
 Tokenizer <- function(x) NGramTokenizer(x, Weka_control(min = 2, max = 2))
 bigram<-TermDocumentMatrix(corp, control = list(tokenize = Tokenizer))
@@ -40,6 +62,8 @@ bigram<-TermDocumentMatrix(corp, control = list(tokenize = Tokenizer))
 Tokenizer <- function(x) NGramTokenizer(x, Weka_control(min = 3, max = 3))
 trigram<-TermDocumentMatrix(corp, control = list(tokenize = Tokenizer))
 
+Tokenizer <- function(x) NGramTokenizer(x, Weka_control(min = 4, max = 4))
+quadgram<-TermDocumentMatrix(corp, control = list(tokenize = Tokenizer))
 
 unigram
 
@@ -53,10 +77,8 @@ gramalyzer<-function(tdm){
 }
 
 df1<-gramalyzer(unigram)
-
 df2<-gramalyzer(bigram)
-
-
 df3<-gramalyzer(trigram)
+df4<-gramalyzer(quadgram)
 
-
+df2[1:20]

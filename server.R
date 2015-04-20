@@ -14,44 +14,25 @@ topwords<-read.table("unitbl.txt",  colClasses=c("Phrase"="character"))
 topwords<-topwords[1:1000,]
 bigtbl<-read.table("bigtbl.txt",  colClasses=c("Phrase"="character"))
 
-
 set.seed(4150)
 
 shinyServer(function(input, output) {
 #    output$nextword<- renderText("Bugaboo")
-    ntries<-0
-    values <- reactiveValues(ntries = 0,ncorrect=0)
-    #ncorrect<-0
-    
-    
+    values <- reactiveValues(ncorrect=0, nwrong=0)
     
     observeEvent(input$predictnow, {
     
-        wordcount <- length(strsplit(gsub(' {2,}',' ',input$iText),' ')[[1]])
+        nextword<-isolate(textpredict(input$iText))
+        output$nextword<- renderText(nextword)
         
-        
-        
-        
- #       output$nextword<- renderText(topwords[sample(2:1000,1),1])
-        output$nextword<- renderText(textpredict(input$iText))
- 
-        isolate({
-            values$ntries <- values$ntries + 1
-        })
-        
-        output$tally<- renderText(c(values$ncorrect,"/",values$ntries))
-        
-        
-    
     })
     observeEvent(input$Scorefeedback, {
         
         
         values$ncorrect <- values$ncorrect + as.numeric(input$Accuracy)
+        values$nwrong <- values$nwrong + !as.numeric(input$Accuracy)
         
-        output$tally<- renderText(c(values$ncorrect,"/",values$ntries))
-        
-        
+        output$tally<- renderText(c(values$ncorrect,"/",values$ncorrect+values$nwrong))
         
     })
     
@@ -75,10 +56,10 @@ texttrim<-function(phrase, newlen){
     
 }
 
-prepare<-function(input){
-    input<-gsub("[^a-zA-Z ]", "", input)
-    input<-tolower(input)
-    input<-paste("^",input, sep="")
+prepare<-function(myinput){
+    myinput<-gsub("[^a-zA-Z ]", "", myinput)
+    myinput<-tolower(myinput)
+    myinput<-paste("^",myinput, sep="")
     
     #   print(input)
 }
@@ -102,8 +83,8 @@ textpredict<-function(text){
     
     while(foundword == FALSE){
         
-        input<-prepare(newstr)
-        result<-grepl(input,bigtbl[bigtbl$set==targetgram+1,1], ignore.case=TRUE)
+        newinput<-prepare(newstr)
+        result<-grepl(newinput,bigtbl[bigtbl$set==targetgram+1,1], ignore.case=TRUE)
         answer<-bigtbl[bigtbl$set==targetgram+1,][result,][1:10,]
         nextword<-texttrim(answer$Phrase, 1)[1]
         

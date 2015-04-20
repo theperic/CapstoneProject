@@ -31,7 +31,7 @@ shinyUI(fluidPage(
         
         h3('Please provide us with feedback: was the prediction correct?'),
         
-        radioButtons('Accuracy',"The Prediction was", choices=list("Correct"=1,"Incorrect"=.0),selected=1),
+        radioButtons('Accuracy',"The Prediction was", choices=list("Correct"=1,"Incorrect"=.0),selected=.5),
         actionButton("Scorefeedback", label = "Submit Feedback")
         
         
